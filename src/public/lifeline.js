@@ -1,5 +1,4 @@
 
-
 const canvas = document.getElementById('actorCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -13,7 +12,8 @@ export class LifeLine{
         this.alto = 0;
         this.color = '#FFDD33';
         this.arrastrando = false;
-       this.texto='object1'; 
+       this.texto='object1';
+       this.tipo=2; 
     }
       drawActor(x,y) {
         ctx.beginPath();

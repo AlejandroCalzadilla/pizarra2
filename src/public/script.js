@@ -6,8 +6,8 @@ const ctx = dropZone.getContext("2d");
 let nodes = [];
 let selectedNode = null;
 let x, y, t, l;
-let xp,yp;
-let i=1;
+let idd=1;
+const socket=io();
 function inicializarElementoArrastrable(elemento) {
   elemento.addEventListener("dragstart", function (event) {
     event.dataTransfer.setData("text/plain", elemento.id);
@@ -36,31 +36,36 @@ dropZone.addEventListener("drop", function (event) {
 
   // Verificar cuál es el elemento arrastrable y actuar en consecuencia
   if (draggedElement === draggableElement1) {
-    ctx.fillStyle = "#3498db";
-    if(i==1){
     const actor = new Actor();
     actor.drawActor(x, y);
-    nodes.push({ actor });
+    actor.id=idd
+    nodes.push({ actor }); 
     console.log(nodes);
-    }else{
-      const actor = new Actor();
-      actor.drawActor(x, y);
-      nodes.push({ actor });
-      console.log(nodes);
-    }
-
-    
   } else if (draggedElement === draggableElement2) {
-    ctx.fillStyle = "#ff0000";  
     const actor = new LifeLine();
     actor.drawActor(x, y);
     actor.texto='objeto' ;
+    actor.id=idd
+   
     nodes.push({ actor });
-    console.log(nodes);
+    console.log(nodes,'nodos');
+  
   }
+   
+  socket.emit('creadop', {
+    nodeId:idd,
+    x: x,
+    y: y,
+  });
+  console.log(idd)
+  idd=idd+1; 
+
+
+
 });
 
-// Al hacer clic en un elemento
+
+// Al hacer clic en un elemento   1
 function clicEnElemento(event) {
   var rect = dropZone.getBoundingClientRect();
   var mouseX = event.clientX - rect.left;
@@ -75,53 +80,109 @@ function clicEnElemento(event) {
       mouseY <= nodes[index].actor.y + nodes[index].actor.alto
     ) {
       selectedNode = index;
-       nodes[selectedNode].actor.color='#FF3C33';
-            bool = true;
-    }
+       nodes[selectedNode].actor.color='#FF3C33';   bool = true; }
   }
-
   return bool;
 }
 
-// Al iniciar el arrastre
+// Al iniciar el arrastre      
 function iniciarArrastre() {
   if (clicEnElemento(event)) {
     nodes[selectedNode].actor.arrastrando = true;
     dropZone.style.cursor = 'grabbing';
   }
 }
-
-// Al detener el arrastre
+// Al detener el arrastre    2
 function detenerArrastre() {
-  if (nodes.length !== 0) {
+  //if (nodes.length !== 0) {
     nodes[selectedNode].actor.arrastrando = false;
-    //nodes[selectedNode].actor.color='#000000'
     dropZone.style.cursor = 'grab';
-  }
-}
+  //}
 
+}
 // Al mover el elemento
 function actualizarPosicionElemento(event) {
-  if (nodes.length !== 0) {
+    //if (nodes.length !== 0) {
     if (nodes[selectedNode].actor.arrastrando) {
       var rect = dropZone.getBoundingClientRect();
       t = nodes[selectedNode].actor.x = event.clientX - rect.left - nodes[selectedNode].actor.ancho / 2;
       l = nodes[selectedNode].actor.y = event.clientY - rect.top - nodes[selectedNode].actor.alto / 2;
-
+      console.log(nodes)
       ctx.clearRect(0, 0, dropZone.width, dropZone.height);
-
+      
       for (let index = 0; index < nodes.length; index++) {
-        x = nodes[index].actor.x;
-        y = nodes[index].actor.y;
-        nodes[index].actor.drawActor(x, y);
+       
+        if(index!==selectedNode){
+         x = nodes[index].actor.x;
+         y = nodes[index].actor.y;
+         nodes[index].actor.drawActor(x, y);
+        }
       }
-      //nodes[selectedNode].actor.color='#000000';
+      console.log(t,l,'aver ')
       nodes[selectedNode].actor.drawActor(t, l);
+     
     }
-  }
+    socket.emit('update_node', {
+      nodeId:nodes[selectedNode].actor.id ,
+      actort:nodes[selectedNode].actor.tipo,
+      x: t,
+      y: l
+    });  
+    
+  //}
 }
+
 
 // Eventos de clic para iniciar/detener el arrastre y mover el elemento
 dropZone.addEventListener('mousedown', iniciarArrastre);
 dropZone.addEventListener('mouseup', detenerArrastre);
 dropZone.addEventListener('mousemove', actualizarPosicionElemento);
+
+
+socket.on('node_updated', (data) => {
+  //console.log(data.nodeId,'data') 
+  //console.log(nodes,'noditosac')
+  // Asumiendo que data contiene coordenadas actualizadas
+  ctx.clearRect(0, 0, dropZone.width, dropZone.height);  
+  for (let index = 0; index < nodes.length; index++) { 
+    if(index+1!==data.nodeId){
+     x = nodes[index].actor.x;
+     y = nodes[index].actor.y;
+     //console.log('index',index,'data',data.nodeID)
+     nodes[index].actor.drawActor(x, y);
+    }else{
+      nodes[index].actor.drawActor(data.x,data.y);
+
+    }
+  }
+});
+
+
+
+
+
+socket.on('creadoa', (data) => {
+ // console.log('prueba4') 
+  // Asumiendo que data contiene coordenadas actualizadas
+  
+  console.log(nodes,'noditoscrea')
+   const index = nodes.findIndex((node) => node.actor.id === data.nodeId);
+    //console.log(index)
+    if (index == -1) {
+       console.log('pruebadddasdasd') 
+        const actor = new Actor();
+        actor.drawActor(data.x,data.y);
+        actor.id=data.nodeId;
+        nodes.push({ actor }); 
+        idd=idd+1;
+    }
+});
+
+
+
+
+
+
+
+
+

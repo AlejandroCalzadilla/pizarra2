@@ -7,6 +7,7 @@ const ctx = canvas.getContext('2d');
 export class Actor{
 
     constructor() {
+        this.id
         this.x = 0;
         this.y = 0;
         this.ancho = 20;
@@ -14,6 +15,8 @@ export class Actor{
         this.color = '#000000';
         this.arrastrando = false;
         this.conexion=[];
+        this.tipo=1;
+        
     }
 
     
